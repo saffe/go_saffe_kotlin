@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Go Saffe Kotlin"
 include(":app")
-include(":go-saffe-kotlin")
+include(":go_saffe_kotlin")
