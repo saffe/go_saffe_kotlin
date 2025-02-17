@@ -4,7 +4,7 @@ Kotlin library for Android that renders Go Saffe capture.
 
 ---
 
-## **Installation**
+## 📦 **Installation**
 
 Add the dependency to your `build.gradle.kts`:
 
@@ -20,7 +20,7 @@ dependencies {
 
 ---
 
-## **How to Use**
+## 🚀 **How to Use**
 
 ### 1. **Initial Setup**
 
@@ -68,8 +68,7 @@ captureView.startCapture(
 
 ---
 
-## **License**
+## 📄 **License**
 
 MIT
 
----
