@@ -167,8 +167,6 @@ class GoSaffeCapture(
                                         window.SaffeCapture.postMessage(JSON.stringify(event.data));
                                     }
                                 }, false);
-                                
-                                console.log("Listener adicionado com sucesso.");
                             })();
                         """
                     ) { }
@@ -219,10 +217,8 @@ class GoSaffeCapture(
     fun handlePermissionsResult(requestCode: Int, grantResults: IntArray) {
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Log.d("GoSaffeCapture", "Permissão de localização concedida pelo usuário.")
                 pendingGeoCallback?.invoke(pendingGeoOrigin, true, false)
             } else {
-                Log.d("GoSaffeCapture", "Permissão de localização negada pelo usuário.")
                 pendingGeoCallback?.invoke(pendingGeoOrigin, false, false)
             }
             pendingGeoCallback = null
