@@ -10,14 +10,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val btnIniciar = findViewById<Button>(R.id.btnIniciarCaptura)
-        btnIniciar.setOnClickListener {
-            val intent = Intent(this, CaptureActivity::class.java).apply {
-                putExtra("captureKey", "")
-                putExtra("user", "")
-                putExtra("type", "verification")
-                putExtra("endToEndId", "endToEndID")
-            }
+        val captureButton = findViewById<Button>(R.id.captureButton)
+        captureButton.setOnClickListener {
+            val intent = Intent(this, CaptureActivity::class.java)
+
             startActivity(intent)
         }
     }

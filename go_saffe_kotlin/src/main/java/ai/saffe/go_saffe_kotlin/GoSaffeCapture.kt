@@ -1,7 +1,9 @@
 package ai.saffe.go_saffe_kotlin
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
 import android.util.Log
@@ -12,11 +14,12 @@ import android.webkit.GeolocationPermissions
 import android.webkit.JavascriptInterface
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
-import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.ProgressBar
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.scottyab.rootbeer.RootBeer
 import org.json.JSONObject
 
@@ -33,21 +36,30 @@ class GoSaffeCapture(
     private val onLoad: (() -> Unit)? = null
 ) {
     companion object {
-        private const val STATIC_URL = "https://go.saffe.ai/v0/capture"
+        private const val BASE_URL = "https://go.saffe.ai/v0/capture"
+        private const val CAMERA_PERMISSION_REQUEST_CODE = 1001
+        private const val LOCATION_PERMISSION_REQUEST_CODE = 2001
     }
 
     private fun isEmulator(): Boolean {
-        val fingerprint = Build.FINGERPRINT.lowercase()
-        val model = Build.MODEL.lowercase()
-        val manufacturer = Build.MANUFACTURER.lowercase()
-        val device = Build.DEVICE.lowercase()
-        val product = Build.PRODUCT.lowercase()
-
-        return (fingerprint.contains("sdk_gphone") ||
-                model.startsWith("sdk_gphone") ||
-                model.contains("google_sdk") ||
-                device.contains("emu") ||
-                product.contains("sdk_gphone"))
+        return (Build.MANUFACTURER.contains("Genymotion")
+                || Build.MODEL.contains("google_sdk")
+                || Build.MODEL.lowercase().contains("droid4x")
+                || Build.MODEL.contains("Emulator")
+                || Build.MODEL.contains("Android SDK built for x86")
+                || Build.HARDWARE == "goldfish"
+                || Build.HARDWARE == "vbox86"
+                || Build.HARDWARE == "ranchu"
+                || Build.HARDWARE.lowercase().contains("nox")
+                || Build.FINGERPRINT.startsWith("generic")
+                || Build.FINGERPRINT.contains("emu")
+                || Build.PRODUCT == "sdk"
+                || Build.PRODUCT == "google_sdk"
+                || Build.PRODUCT == "sdk_x86"
+                || Build.PRODUCT == "vbox86p"
+                || Build.PRODUCT.lowercase().contains("nox")
+                || Build.BOARD.lowercase().contains("nox")
+                || (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic")))
     }
 
     @SuppressLint("SetJavaScriptEnabled", "JavascriptInterface")
@@ -73,7 +85,10 @@ class GoSaffeCapture(
             settings.apply {
                 javaScriptEnabled = true
                 domStorageEnabled = true
-                cacheMode = WebSettings.LOAD_NO_CACHE
+                allowContentAccess = true
+                allowFileAccess = true
+                mediaPlaybackRequiresUserGesture = false
+                javaScriptCanOpenWindowsAutomatically = true
                 setGeolocationEnabled(true)
             }
             clearCache(true)
@@ -84,20 +99,18 @@ class GoSaffeCapture(
                 fun postMessage(message: String) {
                     try {
                         val json = JSONObject(message)
+
                         if (json.optString("source") == "go-saffe-capture") {
                             val payload = json.optJSONObject("payload")
                             val event = payload?.optString("event") ?: ""
+
                             when (event) {
                                 "close" -> onClose?.invoke()
                                 "finish" -> onFinish?.invoke()
                                 "timeout" -> onTimeout?.invoke()
-                                else -> onError?.invoke("Evento desconhecido: $event")
                             }
-                        } else {
-                            onError?.invoke("Fonte inválida na mensagem")
                         }
                     } catch (e: Exception) {
-                        Log.e("GoSaffeCapture", "Erro ao processar mensagem: $message", e)
                         onError?.invoke(e.toString())
                     }
                 }
@@ -105,23 +118,68 @@ class GoSaffeCapture(
 
             webChromeClient = object : WebChromeClient() {
                 override fun onPermissionRequest(request: PermissionRequest?) {
-                    request?.grant(request.resources)
+                    request?.let {
+                        val resources = request.resources
+                        if (resources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
+                            if (ContextCompat.checkSelfPermission(
+                                    context, Manifest.permission.CAMERA
+                                ) == PackageManager.PERMISSION_GRANTED
+                            ) {
+                                request.grant(request.resources)
+                            } else {
+                                ActivityCompat.requestPermissions(
+                                    context as android.app.Activity,
+                                    arrayOf(Manifest.permission.CAMERA),
+                                    CAMERA_PERMISSION_REQUEST_CODE
+                                )
+                            }
+                        } else {
+                            request.grant(request.resources)
+                        }
+                    }
                 }
-                override fun onGeolocationPermissionsShowPrompt(
-                    origin: String,
-                    callback: GeolocationPermissions.Callback
-                ) {
-                    callback.invoke(origin, true, false)
+
+                override fun onGeolocationPermissionsShowPrompt(origin: String, callback: GeolocationPermissions.Callback) {
+                    if (ContextCompat.checkSelfPermission(
+                            context, Manifest.permission.ACCESS_FINE_LOCATION
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        callback.invoke(origin, true, false)
+                    } else {
+                        ActivityCompat.requestPermissions(
+                            context as android.app.Activity,
+                            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                            LOCATION_PERMISSION_REQUEST_CODE
+                        )
+                        pendingGeoCallback = callback
+                        pendingGeoOrigin = origin
+                    }
                 }
             }
 
             webViewClient = object : WebViewClient() {
                 override fun onPageFinished(view: WebView?, url: String?) {
+                    view?.evaluateJavascript(
+                        """
+                            (function() {
+                                window.addEventListener("message", function(event) {
+                                    if (window.SaffeCapture) {
+                                        window.SaffeCapture.postMessage(JSON.stringify(event.data));
+                                    }
+                                }, false);
+                                
+                                console.log("Listener adicionado com sucesso.");
+                            })();
+                        """
+                    ) { }
+
                     progressBar.visibility = View.GONE
                     onLoad?.invoke()
                 }
             }
         }
+
+        WebView.setWebContentsDebuggingEnabled(true)
 
         val jsonBody = JSONObject().apply {
             put("capture_key", captureKey ?: JSONObject.NULL)
@@ -131,9 +189,8 @@ class GoSaffeCapture(
             put("device_context", getDeviceContext())
         }
         val postData = jsonBody.toString().toByteArray(Charsets.UTF_8)
-        Log.d("GoSaffeCapture", "POST data: ${jsonBody.toString()}")
 
-        webView.postUrl(STATIC_URL, postData)
+        webView.postUrl(BASE_URL, postData)
 
         layout.addView(webView)
         layout.addView(progressBar)
@@ -148,11 +205,28 @@ class GoSaffeCapture(
             put("isRealDevice", !isEmulator())
             put("isOnExternalStorage", isExternalStorageAvailable())
         }
-        Log.d("GoSaffeCapture", "Device context: $contextJson")
+
         return contextJson.toString()
     }
 
     private fun isExternalStorageAvailable(): Boolean {
         return Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED
+    }
+
+    private var pendingGeoCallback: GeolocationPermissions.Callback? = null
+    private var pendingGeoOrigin: String? = null
+
+    fun handlePermissionsResult(requestCode: Int, grantResults: IntArray) {
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d("GoSaffeCapture", "Permissão de localização concedida pelo usuário.")
+                pendingGeoCallback?.invoke(pendingGeoOrigin, true, false)
+            } else {
+                Log.d("GoSaffeCapture", "Permissão de localização negada pelo usuário.")
+                pendingGeoCallback?.invoke(pendingGeoOrigin, false, false)
+            }
+            pendingGeoCallback = null
+            pendingGeoOrigin = null
+        }
     }
 }
