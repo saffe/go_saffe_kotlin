@@ -12,10 +12,10 @@ class CaptureActivity : ComponentActivity() {
 
         val captureView = findViewById<GoSaffeCaptureView>(R.id.goSaffeCaptureView)
         captureView.startCapture(
-            captureKey = "7ce7e152-ff28-11ed-97b8-0242ac120003",
-            user = "pedro@saffe.ai",
-            type = "verification",
-            endToEndId = "endToEndId",
+            captureKey = "",
+            user = "",
+            type = "",
+            endToEndId = "",
             onClose = {
                 Log.d("CaptureActivity", "onClose executed")
             },
