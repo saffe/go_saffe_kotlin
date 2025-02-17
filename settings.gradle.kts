@@ -16,9 +16,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url = uri("https://jitpack.io") }
     }
 }
 
-rootProject.name = "Go Saffe Kotlin"
-include(":app")
+rootProject.name = "go_saffe_kotlin"
+//include(":app")
 include(":go_saffe_kotlin")
