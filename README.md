@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.saffe:go_saffe_kotlin:1.0.0")
+    implementation("com.github.saffe:go_saffe_kotlin:1.1.0")
 }
 ```
 
