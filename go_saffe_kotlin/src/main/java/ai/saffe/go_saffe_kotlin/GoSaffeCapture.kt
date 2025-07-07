@@ -29,14 +29,8 @@ interface Settings {
     val lang: String?
 }
 
-interface SendResultsTo {
-    val media: String
-    val email: String
-}
-
 interface ExtraData {
     val settings: Settings?
-    val sendResultsTo: SendResultsTo?
 }
 
 class GoSaffeCapture(
@@ -209,12 +203,6 @@ class GoSaffeCapture(
                             settings.primaryColor?.let { put("primary_color", it) }
                             settings.secondaryColor?.let { put("secondary_color", it) }
                             settings.lang?.let { put("lang", it) }
-                        })
-                    }
-                    it.sendResultsTo?.let { sendResultsTo ->
-                        put("send_results_to", JSONObject().apply {
-                            put("media", sendResultsTo.media)
-                            put("email", sendResultsTo.email)
                         })
                     }
                 })
