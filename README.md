@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.saffe:go_saffe_kotlin:1.0.0")
+    implementation("com.github.saffe:go_saffe_kotlin:1.1.0")
 }
 ```
 
@@ -68,7 +68,45 @@ captureView.startCapture(
 
 ---
 
-## 📄 **License**
+### 3. The `extraData` parameter
+
+The `extraData` parameter is optional and allows for dynamic changes specific to the transaction, such as language and colors. It's a named parameter, so you only need to include it when you want to customize the component. If you don't want any customization, simply omit it.
+
+Primary and secondary colors should be informed in hexadecimal code. Possible values for the key "lang" at the moment are "en" so that the capture interface is presented in english, "pt" for the language to be portuguese, and "es" for spanish.
+
+#### Example of `ExtraData` usage
+
+```kotlin
+// Create settings object
+val settings = object : Settings {
+    override val primaryColor: String? = "#00ABAB"
+    override val secondaryColor: String? = "#6A6A6A"
+    override val lang: String? = "en"
+}
+
+// Create extra data object
+val extraData = object : ExtraData {
+    override val settings: Settings? = settings
+}
+
+// Use with GoSaffeCaptureView
+captureView.startCapture(
+    captureKey = "your_capture_key",
+    user = "user@example.com",
+    type = "onboarding",
+    endToEndId = "unique_id",
+    extraData = extraData,
+    onClose = {},
+    onFinish = {},
+    onTimeout = {},
+    onError = {},
+    onLoad = {}
+)
+```
+
+---
+
+## **License**
 
 MIT
 

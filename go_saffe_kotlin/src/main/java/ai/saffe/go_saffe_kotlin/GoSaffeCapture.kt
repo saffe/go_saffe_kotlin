@@ -23,12 +23,23 @@ import androidx.core.content.ContextCompat
 import com.scottyab.rootbeer.RootBeer
 import org.json.JSONObject
 
+interface Settings {
+    val primaryColor: String?
+    val secondaryColor: String?
+    val lang: String?
+}
+
+interface ExtraData {
+    val settings: Settings?
+}
+
 class GoSaffeCapture(
     private val context: Context,
     private val captureKey: String?,
     private val user: String?,
     private val type: String?,
     private val endToEndId: String?,
+    private val extraData: ExtraData? = null,
     private val onClose: (() -> Unit)? = null,
     private val onFinish: (() -> Unit)? = null,
     private val onTimeout: (() -> Unit)? = null,
@@ -180,11 +191,22 @@ class GoSaffeCapture(
         WebView.setWebContentsDebuggingEnabled(true)
 
         val jsonBody = JSONObject().apply {
-            put("capture_key", captureKey ?: JSONObject.NULL)
-            put("user_identifier", user ?: JSONObject.NULL)
-            put("type", type ?: JSONObject.NULL)
-            put("end_to_end_id", endToEndId ?: JSONObject.NULL)
+            captureKey?.let { put("capture_key", it) }
+            user?.let { put("user_identifier", it) }
+            type?.let { put("type", it) }
+            endToEndId?.let { put("end_to_end_id", it) }
             put("device_context", getDeviceContext())
+            extraData?.let {
+                put("extra_data", JSONObject().apply {
+                    it.settings?.let { settings ->
+                        put("settings", JSONObject().apply {
+                            settings.primaryColor?.let { put("primary_color", it) }
+                            settings.secondaryColor?.let { put("secondary_color", it) }
+                            settings.lang?.let { put("lang", it) }
+                        })
+                    }
+                })
+            }
         }
         val postData = jsonBody.toString().toByteArray(Charsets.UTF_8)
 

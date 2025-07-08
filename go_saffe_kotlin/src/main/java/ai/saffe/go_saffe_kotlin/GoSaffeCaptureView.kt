@@ -13,11 +13,12 @@ class GoSaffeCaptureView @JvmOverloads constructor(
         user: String,
         type: String,
         endToEndId: String,
+        extraData: ExtraData? = null,
         onClose: (() -> Unit)? = null,
         onFinish: (() -> Unit)? = null,
         onTimeout: (() -> Unit)? = null,
         onError: ((String) -> Unit)? = null,
-        onLoad: (() -> Unit)? = null
+        onLoad: (() -> Unit)? = null,
     ) {
         removeAllViews()
         val capture = GoSaffeCapture(
@@ -26,6 +27,7 @@ class GoSaffeCaptureView @JvmOverloads constructor(
             user = user,
             type = type,
             endToEndId = endToEndId,
+            extraData = extraData,
             onClose = onClose,
             onFinish = onFinish,
             onTimeout = onTimeout,
