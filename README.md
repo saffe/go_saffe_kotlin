@@ -68,15 +68,19 @@ captureView.startCapture(
 
 ---
 
-### 3. **Using Extra Data**
+### 3. The `extraData` parameter
 
-You can customize the capture experience by passing additional settings through the `extraData` parameter:
+The `extraData` parameter is optional and allows for dynamic changes specific to the transaction, such as language and colors. It's a named parameter, so you only need to include it when you want to customize the component. If you don't want any customization, simply omit it.
+
+Primary and secondary colors should be informed in hexadecimal code. Possible values for the key "lang" at the moment are "en" so that the capture interface is presented in english, "pt" for the language to be portuguese, and "es" for spanish.
+
+#### Example of `ExtraData` usage
 
 ```kotlin
 // Create settings object
 val settings = object : Settings {
     override val primaryColor: String? = "#00ABAB"
-    override val secondaryColor: String? = "#33FF57"
+    override val secondaryColor: String? = "#6A6A6A"
     override val lang: String? = "en"
 }
 
@@ -100,14 +104,9 @@ captureView.startCapture(
 )
 ```
 
-#### **Settings Properties**
-- `primaryColor`: Optional string for primary color customization (hex format)
-- `secondaryColor`: Optional string for secondary color customization (hex format)
-- `lang`: Optional string for language setting (e.g., "en", "pt", "es")
-
 ---
 
-## 📄 **License**
+## **License**
 
 MIT
 
