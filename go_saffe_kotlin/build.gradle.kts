@@ -37,7 +37,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation("com.scottyab:rootbeer-lib:0.0.8")
+    implementation("com.scottyab:rootbeer-lib:0.1.2")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
